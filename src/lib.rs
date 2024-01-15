@@ -76,14 +76,14 @@ impl<T> Enable<T> {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 struct On<T> {
     enable: True,
     #[serde(flatten)]
     inner: T,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 struct True;
 
 impl Serialize for True {
@@ -109,7 +109,7 @@ impl<'de> Deserialize<'de> for True {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct False;
 
 impl Serialize for False {
