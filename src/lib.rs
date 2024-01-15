@@ -24,20 +24,10 @@ impl<'de, T: Deserialize<'de> + std::fmt::Debug> Deserialize<'de> for Enable<T> 
     where
         D: serde::Deserializer<'de>,
     {
-        // let is_it_disabled = Disabled::deserialize(deserializer);
-
-        // if is_it_disabled.is_ok() {
-        //     return Ok(Enable::Off);
-        // }
-
-        // let is_it_enabled = On::<T>::deserialize(deserializer);
-        //
-        let x = InnerEnable::<T>::deserialize(deserializer)?;
-
-        match x {
-            InnerEnable::On(On { inner, .. }) => Ok(Enable::On(inner)),
-            InnerEnable::Off { .. } => Ok(Enable::Off),
-        }
+        InnerEnable::<T>::deserialize(deserializer).map(|enabled| match enabled {
+            InnerEnable::On(On { inner, .. }) => Enable::On(inner),
+            InnerEnable::Off { .. } => Enable::Off,
+        })
     }
 }
 
