@@ -3,13 +3,13 @@ use serde::{de::Visitor, Deserialize, Serialize};
 /// `Enable<T>` is a wrapper to properly `Serialize` and `Deserialize`
 /// settings that can be turned `On` or `Off`.
 /// Particularly, in the `Off` variant the aditional fields are not required.
-#[derive(Clone, Serialize, Debug)]
+#[derive(Clone, Debug)]
 pub enum Enable<T> {
     On(T),
     Off,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(untagged)]
 enum InnerEnable<T> {
     On(On<T>),
@@ -28,6 +28,23 @@ impl<'de, T: Deserialize<'de> + std::fmt::Debug> Deserialize<'de> for Enable<T> 
             InnerEnable::On(On { inner, .. }) => Enable::On(inner),
             InnerEnable::Off { .. } => Enable::Off,
         })
+    }
+}
+
+impl<T: Serialize> Serialize for Enable<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let inner = match self {
+            Enable::On(inner) => InnerEnable::On(On {
+                enable: True,
+                inner,
+            }),
+            Enable::Off => InnerEnable::Off { enable: False },
+        };
+
+        inner.serialize(serializer)
     }
 }
 
@@ -137,16 +154,16 @@ impl<'de> Deserialize<'de> for False {
 
 #[cfg(test)]
 mod tests {
-    use serde::Deserialize;
+    use serde::{Deserialize, Serialize};
 
     use crate::Enable;
 
-    #[derive(Deserialize)]
+    #[derive(Deserialize, Serialize)]
     struct Outside {
         inside: Enable<Inside>,
     }
 
-    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[derive(Deserialize, Serialize, Debug, PartialEq, Eq)]
     struct Inside {
         thing: u32,
         other: String,
@@ -197,5 +214,38 @@ mod tests {
                 other: "Great".into()
             })
         );
+    }
+
+    #[test]
+    fn serialize_an_enabled_feature() {
+        let o = Outside {
+            inside: Enable::On(Inside {
+                thing: 1,
+                other: "Great".into(),
+            }),
+        };
+        let raw = indoc::indoc! {r#"
+            inside:
+              enable: true
+              thing: 1
+              other: Great
+            "#};
+
+        let result = serde_yaml::to_string(&o).unwrap();
+        assert_eq!(result, raw,);
+    }
+
+    #[test]
+    fn serialize_a_disabled_feature() {
+        let o = Outside {
+            inside: Enable::Off,
+        };
+        let raw = indoc::indoc! {r#"
+            inside:
+              enable: false
+            "#};
+
+        let result = serde_yaml::to_string(&o).unwrap();
+        assert_eq!(result, raw,);
     }
 }
