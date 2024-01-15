@@ -1,29 +1,58 @@
 use serde::{de::Visitor, Deserialize, Serialize};
 
-///
 /// `Enable<T>` is a wrapper to properly `Serialize` and `Deserialize`
 /// settings that can be turned `On` or `Off`.
 /// Particularly, in the `Off` variant the aditional fields are not required.
-#[allow(private_interfaces)]
-#[derive(Clone, Deserialize, Serialize, Debug)]
-#[serde(untagged)]
+#[derive(Clone, Serialize, Debug)]
 pub enum Enable<T> {
+    On(T),
+    Off,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum InnerEnable<T> {
     On(On<T>),
-    Off { enable: False },
+    #[allow(dead_code)]
+    Off {
+        enable: False,
+    },
+}
+
+impl<'de, T: Deserialize<'de> + std::fmt::Debug> Deserialize<'de> for Enable<T> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        // let is_it_disabled = Disabled::deserialize(deserializer);
+
+        // if is_it_disabled.is_ok() {
+        //     return Ok(Enable::Off);
+        // }
+
+        // let is_it_enabled = On::<T>::deserialize(deserializer);
+        //
+        let x = InnerEnable::<T>::deserialize(deserializer)?;
+
+        match x {
+            InnerEnable::On(On { inner, .. }) => Ok(Enable::On(inner)),
+            InnerEnable::Off { .. } => Ok(Enable::Off),
+        }
+    }
 }
 
 impl<T> Enable<T> {
     pub fn into_inner(self) -> Option<T> {
         match self {
-            Enable::On(On { inner, .. }) => Some(inner),
-            Enable::Off { .. } => None,
+            Enable::On(inner) => Some(inner),
+            Enable::Off => None,
         }
     }
 
     pub fn as_ref(&self) -> Option<&T> {
         match self {
-            Enable::On(On { inner, .. }) => Some(inner),
-            Enable::Off { .. } => None,
+            Enable::On(inner) => Some(inner),
+            Enable::Off => None,
         }
     }
 
@@ -32,14 +61,11 @@ impl<T> Enable<T> {
     }
 
     pub fn off() -> Enable<T> {
-        Self::Off { enable: False }
+        Self::Off
     }
 
     pub fn on(inner: T) -> Enable<T> {
-        Self::On(On {
-            enable: True,
-            inner,
-        })
+        Self::On(inner)
     }
 }
 
