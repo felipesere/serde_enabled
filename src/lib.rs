@@ -1,4 +1,4 @@
-use serde::{de::Visitor, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 /// `Enable<T>` is a wrapper to properly `Serialize` and `Deserialize`
 /// settings that can be turned `On` or `Off`.
@@ -95,29 +95,12 @@ impl Serialize for True {
     }
 }
 
-struct BoolVistor;
-
-impl Visitor<'_> for BoolVistor {
-    type Value = bool;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("a bool")
-    }
-
-    fn visit_bool<E>(self, v: bool) -> std::prelude::v1::Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        Ok(v)
-    }
-}
-
 impl<'de> Deserialize<'de> for True {
     fn deserialize<D>(deserializer: D) -> std::prelude::v1::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        let val = deserializer.deserialize_bool(BoolVistor)?;
+        let val = bool::deserialize(deserializer)?;
         if val {
             Ok(True)
         } else {
@@ -143,7 +126,7 @@ impl<'de> Deserialize<'de> for False {
     where
         D: serde::Deserializer<'de>,
     {
-        let val = deserializer.deserialize_bool(BoolVistor)?;
+        let val = bool::deserialize(deserializer)?;
         if !val {
             Ok(False)
         } else {
