@@ -19,7 +19,7 @@ enum InnerEnable<T> {
     },
 }
 
-impl<'de, T: Deserialize<'de> + std::fmt::Debug> Deserialize<'de> for Enable<T> {
+impl<'de, T: Deserialize<'de>> Deserialize<'de> for Enable<T> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -76,14 +76,13 @@ impl<T> Enable<T> {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize)]
 struct On<T> {
     enable: True,
     #[serde(flatten)]
     inner: T,
 }
 
-#[derive(Debug)]
 struct True;
 
 impl Serialize for True {
@@ -109,7 +108,6 @@ impl<'de> Deserialize<'de> for True {
     }
 }
 
-#[derive(Debug)]
 struct False;
 
 impl Serialize for False {
