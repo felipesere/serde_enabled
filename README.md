@@ -1,2 +1,2 @@
 # serde_enabled
-A utility type to support deserializing things whcih can be enabled or disabled
+A utility type to support deserializing things which can be enabled or disabled
