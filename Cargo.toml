@@ -1,7 +1,15 @@
 [package]
 name = "serde_enabled"
 version = "0.1.0"
+description = "A small wrapper for enabling/disabling sections in configuartion files easier with Serde."
+homepage = "https://github.com/felipesere/erde_enabled"
+repository = "https://github.com/felipesere/erde_enabled"
+
+readme = "README.md"
+
 edition = "2021"
+
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
